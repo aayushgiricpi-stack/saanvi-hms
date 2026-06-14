@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import DashboardLayout from "../layouts/DashboardLayout";
+import { toast } from "react-toastify";
+
+
 
 function PatientDashboard() {
   const [doctors, setDoctors] = useState([]);
@@ -11,12 +14,16 @@ function PatientDashboard() {
     appointmentDate: "",
   });
 
+  const [myAppointments, setMyAppointments] =
+    useState([]);
+
   const user = JSON.parse(
     localStorage.getItem("user")
   );
 
   useEffect(() => {
     fetchDoctors();
+    fetchMyAppointments();
   }, []);
 
   const fetchDoctors = async () => {
@@ -26,6 +33,18 @@ function PatientDashboard() {
       );
 
       setDoctors(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchMyAppointments = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/api/appointments/patient/${user.email}`
+      );
+
+      setMyAppointments(response.data);
     } catch (error) {
       console.log(error);
     }
@@ -58,6 +77,8 @@ function PatientDashboard() {
         "Appointment Booked Successfully"
       );
 
+      fetchMyAppointments();
+
       setAppointment({
         doctorId: "",
         doctorName: "",
@@ -74,6 +95,8 @@ function PatientDashboard() {
   return (
     <DashboardLayout role="Patient">
       <div className="container">
+
+        {/* Book Appointment Card */}
         <div className="card shadow border-0">
           <div className="card-header bg-success text-white">
             <h3 className="mb-0">
@@ -153,6 +176,63 @@ function PatientDashboard() {
             </button>
           </div>
         </div>
+
+        {/* My Appointments */}
+        <div className="card shadow mt-4">
+          <div className="card-header bg-primary text-white">
+            <h4 className="mb-0">
+              My Appointments
+            </h4>
+          </div>
+
+          <div className="card-body">
+            <table className="table table-striped">
+              <thead>
+                <tr>
+                  <th>Doctor</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {myAppointments.length > 0 ? (
+                  myAppointments.map(
+                    (appt) => (
+                      <tr key={appt.id}>
+                        <td>
+                          {appt.doctorName}
+                        </td>
+
+                        <td>
+                          {
+                            appt.appointmentDate
+                          }
+                        </td>
+
+                        <td>
+                          <span className="badge bg-warning">
+                            {appt.status}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  )
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="3"
+                      className="text-center"
+                    >
+                      No Appointments Found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </DashboardLayout>
   );

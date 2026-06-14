@@ -3,6 +3,7 @@ const express = require("express");
 const {
   createAppointment,
   getDoctorAppointments,
+  getPatientAppointments,
   updateStatus,
 } = require("../controllers/appointmentController");
 
@@ -13,6 +14,10 @@ router.post("/", createAppointment);
 router.get(
   "/doctor/:doctorId",
   getDoctorAppointments
+);
+router.get(
+  "/patient/:email",
+  getPatientAppointments
 );
 
 router.put(

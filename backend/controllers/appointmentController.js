@@ -56,3 +56,21 @@ exports.updateStatus = async (
     });
   }
 };
+exports.getPatientAppointments =
+  async (req, res) => {
+    try {
+      const appointments =
+        await Appointment.findAll({
+          where: {
+            patientEmail:
+              req.params.email,
+          },
+        });
+
+      res.json(appointments);
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+      });
+    }
+  };
