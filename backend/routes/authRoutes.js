@@ -1,17 +1,33 @@
 const express = require("express");
 
+const router = express.Router();
+
 const {
   register,
   login,
   getDoctors,
-} = require("../controllers/authController");
+} = require(
+  "../controllers/authController"
+);
 
-const router = express.Router();
+const verifyToken = require(
+  "../middleware/authMiddleware"
+);
 
-router.post("/register", register);
-router.post("/login", login);
+router.post(
+  "/register",
+  register
+);
 
-// Get all doctors
-router.get("/doctors", getDoctors);
+router.post(
+  "/login",
+  login
+);
+
+router.get(
+  "/doctors",
+  verifyToken,
+  getDoctors
+);
 
 module.exports = router;

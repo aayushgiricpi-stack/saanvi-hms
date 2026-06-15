@@ -3,23 +3,42 @@ import axios from "axios";
 import DashboardLayout from "../layouts/DashboardLayout";
 import { toast } from "react-toastify";
 
-
-
 function PatientDashboard() {
-  const [doctors, setDoctors] = useState([]);
-
-  const [appointment, setAppointment] = useState({
-    doctorId: "",
-    doctorName: "",
-    appointmentDate: "",
-  });
-
-  const [myAppointments, setMyAppointments] =
+  const [doctors, setDoctors] =
     useState([]);
+
+  const [appointment, setAppointment] =
+    useState({
+      doctorId: "",
+      doctorName: "",
+      appointmentDate: "",
+    });
+
+  const [myAppointments,
+    setMyAppointments] = useState([]);
 
   const user = JSON.parse(
     localStorage.getItem("user")
   );
+
+  // RBAC
+  if (!user) {
+    return (
+      <div className="container mt-5">
+        <h3>Unauthorized Access</h3>
+      </div>
+    );
+  }
+
+  if (user.role !== "patient") {
+    return (
+      <div className="container mt-5">
+        <h3>
+          Access Denied - Patient Only
+        </h3>
+      </div>
+    );
+  }
 
   useEffect(() => {
     fetchDoctors();
@@ -28,9 +47,19 @@ function PatientDashboard() {
 
   const fetchDoctors = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/auth/doctors"
-      );
+      const token =
+        localStorage.getItem("token");
+
+      const response =
+        await axios.get(
+          "http://localhost:5000/api/auth/doctors",
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+          }
+        );
 
       setDoctors(response.data);
     } catch (error) {
@@ -38,155 +67,254 @@ function PatientDashboard() {
     }
   };
 
-  const fetchMyAppointments = async () => {
-    try {
-      const response = await axios.get(
-        `http://localhost:5000/api/appointments/patient/${user.email}`
-      );
+  const fetchMyAppointments =
+    async () => {
+      try {
+        const token =
+          localStorage.getItem(
+            "token"
+          );
 
-      setMyAppointments(response.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+        const response =
+          await axios.get(
+            `http://localhost:5000/api/appointments/patient/${user.email}`,
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
 
-  const bookAppointment = async () => {
-    if (
-      !appointment.doctorId ||
-      !appointment.appointmentDate
-    ) {
-      return alert(
-        "Please select doctor and appointment date"
-      );
-    }
+        setMyAppointments(
+          response.data
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
-    try {
-      await axios.post(
-        "http://localhost:5000/api/appointments",
-        {
-          patientName: user.fullname,
-          patientEmail: user.email,
-          doctorId: appointment.doctorId,
-          doctorName: appointment.doctorName,
-          appointmentDate:
-            appointment.appointmentDate,
-        }
-      );
+  const bookAppointment =
+    async () => {
+      if (
+        !appointment.doctorId ||
+        !appointment.appointmentDate
+      ) {
+        return toast.warning(
+          "Please select doctor and date"
+        );
+      }
 
-      alert(
-        "Appointment Booked Successfully"
-      );
+      try {
+        const token =
+          localStorage.getItem(
+            "token"
+          );
 
-      fetchMyAppointments();
+        await axios.post(
+          "http://localhost:5000/api/appointments",
+          {
+            patientName:
+              user.fullname,
+            patientEmail:
+              user.email,
+            doctorId:
+              appointment.doctorId,
+            doctorName:
+              appointment.doctorName,
+            appointmentDate:
+              appointment.appointmentDate,
+          },
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+          }
+        );
 
-      setAppointment({
-        doctorId: "",
-        doctorName: "",
-        appointmentDate: "",
-      });
-    } catch (error) {
-      alert(
-        error.response?.data?.message ||
-          "Failed To Book Appointment"
-      );
-    }
-  };
+        toast.success(
+          "Appointment Booked Successfully"
+        );
+
+        fetchMyAppointments();
+
+        setAppointment({
+          doctorId: "",
+          doctorName: "",
+          appointmentDate: "",
+        });
+      } catch (error) {
+        toast.error(
+          error.response?.data
+            ?.message ||
+            "Booking Failed"
+        );
+      }
+    };
+
+  const pendingCount =
+    myAppointments.filter(
+      (a) => a.status === "Pending"
+    ).length;
+
+  const approvedCount =
+    myAppointments.filter(
+      (a) => a.status === "Approved"
+    ).length;
 
   return (
     <DashboardLayout role="Patient">
-      <div className="container">
+      <div className="container-fluid">
 
-        {/* Book Appointment Card */}
-        <div className="card shadow border-0">
-          <div className="card-header bg-success text-white">
-            <h3 className="mb-0">
-              📅 Book Appointment
-            </h3>
-          </div>
-
+        {/* Welcome */}
+        <div className="card shadow border-0 mb-4">
           <div className="card-body">
-            <div className="mb-3">
-              <label className="form-label">
-                Select Doctor
-              </label>
+            <h2>
+              👋 Welcome {user.fullname}
+            </h2>
 
-              <select
-                className="form-select"
-                value={appointment.doctorId}
-                onChange={(e) => {
-                  const doctor =
-                    doctors.find(
-                      (d) =>
-                        d.id ==
-                        e.target.value
-                    );
-
-                  setAppointment({
-                    ...appointment,
-                    doctorId:
-                      doctor.id,
-                    doctorName:
-                      doctor.fullname,
-                  });
-                }}
-              >
-                <option value="">
-                  Choose Doctor
-                </option>
-
-                {doctors.map(
-                  (doctor) => (
-                    <option
-                      key={doctor.id}
-                      value={doctor.id}
-                    >
-                      {doctor.fullname}
-                    </option>
-                  )
-                )}
-              </select>
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">
-                Appointment Date
-              </label>
-
-              <input
-                type="date"
-                className="form-control"
-                value={
-                  appointment.appointmentDate
-                }
-                onChange={(e) =>
-                  setAppointment({
-                    ...appointment,
-                    appointmentDate:
-                      e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            <button
-              className="btn btn-success w-100"
-              onClick={bookAppointment}
-            >
-              Book Appointment
-            </button>
+            <p className="text-muted">
+              Book and manage your
+              appointments.
+            </p>
           </div>
         </div>
 
-        {/* My Appointments */}
-        <div className="card shadow mt-4">
-          <div className="card-header bg-primary text-white">
-            <h4 className="mb-0">
-              My Appointments
+        {/* Statistics */}
+        <div className="row g-3 mb-4">
+
+          <div className="col-md-4">
+            <div className="card bg-primary text-white shadow border-0">
+              <div className="card-body text-center">
+                <h2>
+                  {
+                    myAppointments.length
+                  }
+                </h2>
+                <p>
+                  Total Appointments
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-4">
+            <div className="card bg-warning shadow border-0">
+              <div className="card-body text-center">
+                <h2>
+                  {pendingCount}
+                </h2>
+                <p>Pending</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-4">
+            <div className="card bg-success text-white shadow border-0">
+              <div className="card-body text-center">
+                <h2>
+                  {approvedCount}
+                </h2>
+                <p>Approved</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Book Appointment */}
+        <div className="card shadow border-0">
+          <div className="card-header bg-success text-white">
+            <h4>
+              📅 Book Appointment
             </h4>
           </div>
 
           <div className="card-body">
-            <table className="table table-striped">
+
+            <select
+              className="form-select mb-3"
+              value={
+                appointment.doctorId
+              }
+              onChange={(e) => {
+                const doctor =
+                  doctors.find(
+                    (d) =>
+                      d.id ==
+                      e.target.value
+                  );
+
+                setAppointment({
+                  ...appointment,
+                  doctorId:
+                    doctor.id,
+                  doctorName:
+                    doctor.fullname,
+                });
+              }}
+            >
+              <option value="">
+                Select Doctor
+              </option>
+
+              {doctors.map(
+                (doctor) => (
+                  <option
+                    key={doctor.id}
+                    value={
+                      doctor.id
+                    }
+                  >
+                    {
+                      doctor.fullname
+                    }
+                  </option>
+                )
+              )}
+            </select>
+
+            <input
+              type="date"
+              className="form-control mb-3"
+              value={
+                appointment.appointmentDate
+              }
+              onChange={(e) =>
+                setAppointment({
+                  ...appointment,
+                  appointmentDate:
+                    e.target.value,
+                })
+              }
+            />
+
+            <button
+              className="btn btn-success w-100"
+              onClick={
+                bookAppointment
+              }
+            >
+              Book Appointment
+            </button>
+
+          </div>
+        </div>
+
+        {/* My Appointments */}
+        <div className="card shadow border-0 mt-4">
+
+          <div className="card-header bg-primary text-white">
+            <h4>
+              📋 My Appointments
+            </h4>
+          </div>
+
+          <div className="card-body table-responsive">
+
+            <table className="table table-hover">
+
               <thead>
                 <tr>
                   <th>Doctor</th>
@@ -196,12 +324,20 @@ function PatientDashboard() {
               </thead>
 
               <tbody>
-                {myAppointments.length > 0 ? (
+
+                {myAppointments.length >
+                0 ? (
                   myAppointments.map(
                     (appt) => (
-                      <tr key={appt.id}>
+                      <tr
+                        key={
+                          appt.id
+                        }
+                      >
                         <td>
-                          {appt.doctorName}
+                          {
+                            appt.doctorName
+                          }
                         </td>
 
                         <td>
@@ -211,8 +347,20 @@ function PatientDashboard() {
                         </td>
 
                         <td>
-                          <span className="badge bg-warning">
-                            {appt.status}
+                          <span
+                            className={`badge ${
+                              appt.status ===
+                              "Approved"
+                                ? "bg-success"
+                                : appt.status ===
+                                  "Rejected"
+                                ? "bg-danger"
+                                : "bg-warning text-dark"
+                            }`}
+                          >
+                            {
+                              appt.status
+                            }
                           </span>
                         </td>
                       </tr>
@@ -228,8 +376,11 @@ function PatientDashboard() {
                     </td>
                   </tr>
                 )}
+
               </tbody>
+
             </table>
+
           </div>
         </div>
 

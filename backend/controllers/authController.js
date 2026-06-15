@@ -115,6 +115,11 @@ exports.getDoctors = async (
         where: {
           role: "doctor",
         },
+        attributes: [
+          "id",
+          "fullname",
+          "email",
+        ],
       });
 
     res.json(doctors);
