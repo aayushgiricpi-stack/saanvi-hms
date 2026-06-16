@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 function Login() {
   const navigate = useNavigate();
@@ -41,15 +42,25 @@ function Login() {
         JSON.stringify(response.data.user)
       );
 
-      if (response.data.user.role === "doctor") {
+      if (
+        response.data.user.role ===
+        "admin"
+      ) {
+        navigate("/admin-dashboard");
+      }
+      else if (
+        response.data.user.role ===
+        "doctor"
+      ) {
         navigate("/doctor-dashboard");
-      } else {
+      }
+      else {
         navigate("/patient-dashboard");
       }
     } catch (error) {
       alert(
         error.response?.data?.message ||
-          "Login Failed"
+        "Login Failed"
       );
     }
   };
@@ -79,11 +90,10 @@ function Login() {
             <div className="d-flex gap-2 mb-4">
               <button
                 type="button"
-                className={`btn ${
-                  role === "doctor"
+                className={`btn ${role === "doctor"
                     ? "btn-primary"
                     : "btn-outline-primary"
-                } flex-fill`}
+                  } flex-fill`}
                 onClick={() => setRole("doctor")}
               >
                 👨‍⚕️ Doctor
@@ -91,11 +101,10 @@ function Login() {
 
               <button
                 type="button"
-                className={`btn ${
-                  role === "patient"
+                className={`btn ${role === "patient"
                     ? "btn-success"
                     : "btn-outline-success"
-                } flex-fill`}
+                  } flex-fill`}
                 onClick={() => setRole("patient")}
               >
                 🧑 Patient

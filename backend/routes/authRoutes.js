@@ -1,18 +1,27 @@
 const express = require("express");
 
-const router = express.Router();
-
 const {
   register,
   login,
   getDoctors,
-} = require(
-  "../controllers/authController"
-);
+  getAllUsers,
+} = require("../controllers/authController");
 
 const verifyToken = require(
   "../middleware/authMiddleware"
 );
+
+const authorizeRole = require(
+  "../middleware/roleMiddleware"
+);
+
+const router = express.Router();
+
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
 
 router.post(
   "/register",
@@ -24,10 +33,25 @@ router.post(
   login
 );
 
+/*
+|--------------------------------------------------------------------------
+| Protected Routes
+|--------------------------------------------------------------------------
+*/
+
+// Get all doctors
 router.get(
   "/doctors",
   verifyToken,
   getDoctors
+);
+
+// Admin Only
+router.get(
+  "/users",
+  verifyToken,
+  authorizeRole("admin"),
+  getAllUsers
 );
 
 module.exports = router;
