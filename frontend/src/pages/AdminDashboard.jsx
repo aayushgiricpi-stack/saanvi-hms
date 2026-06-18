@@ -13,10 +13,6 @@ function AdminDashboard() {
       phone: "",
       password: "",
     });
-
-
-  
-
   const [editingDoctorId,
     setEditingDoctorId] =
     useState(null);
@@ -343,12 +339,19 @@ function AdminDashboard() {
 
               <div className="col-md-2">
                 <button
-                  className="btn btn-success w-100"
+                  className={`btn w-100 ${editingDoctorId
+                    ? "btn-warning"
+                    : "btn-success"
+                    }`}
                   onClick={
-                    createDoctor
+                    editingDoctorId
+                      ? updateDoctor
+                      : createDoctor
                   }
                 >
-                  Add Doctor
+                  {editingDoctorId
+                    ? "Update Doctor"
+                    : "Add Doctor"}
                 </button>
               </div>
 
@@ -418,23 +421,29 @@ function AdminDashboard() {
                       </td>
 
                       <td>
+                        {user.role === "doctor" ? (
+                          <>
+                            <button
+                              className="btn btn-warning btn-sm me-2"
+                              onClick={() =>
+                                editDoctor(user)
+                              }
+                            >
+                              Edit
+                            </button>
 
-                        {user.role ===
-                          "doctor" ? (
-                          <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() =>
-                              deleteDoctor(
-                                user.id
-                              )
-                            }
-                          >
-                            Delete
-                          </button>
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() =>
+                                deleteDoctor(user.id)
+                              }
+                            >
+                              Delete
+                            </button>
+                          </>
                         ) : (
                           "-"
                         )}
-
                       </td>
 
                     </tr>

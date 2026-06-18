@@ -1,22 +1,29 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 
-// Get Doctors
+// ======================================
+// Get All Doctors
+// ======================================
 exports.getDoctors = async (req, res) => {
   try {
     const doctors = await User.findAll({
-      where: { role: "doctor" },
+      where: {
+        role: "doctor",
+      },
     });
 
-    res.json(doctors);
+    res.status(200).json(doctors);
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
+// ======================================
 // Create Doctor
+// ======================================
 exports.createDoctor = async (req, res) => {
   try {
     const {
@@ -25,6 +32,19 @@ exports.createDoctor = async (req, res) => {
       phone,
       password,
     } = req.body;
+
+    const existingDoctor =
+      await User.findOne({
+        where: { email },
+      });
+
+    if (existingDoctor) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Doctor already exists with this email",
+      });
+    }
 
     const hashedPassword =
       await bcrypt.hash(password, 10);
@@ -38,15 +58,23 @@ exports.createDoctor = async (req, res) => {
         role: "doctor",
       });
 
-    res.status(201).json(doctor);
+    res.status(201).json({
+      success: true,
+      message:
+        "Doctor Created Successfully",
+      doctor,
+    });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
+// ======================================
 // Update Doctor
+// ======================================
 exports.updateDoctor = async (
   req,
   res
@@ -59,6 +87,7 @@ exports.updateDoctor = async (
 
     if (!doctor) {
       return res.status(404).json({
+        success: false,
         message:
           "Doctor Not Found",
       });
@@ -88,23 +117,39 @@ exports.updateDoctor = async (
   }
 };
 
+// ======================================
 // Delete Doctor
-exports.deleteDoctor = async (req, res) => {
+// ======================================
+exports.deleteDoctor = async (
+  req,
+  res
+) => {
   try {
     const doctor =
       await User.findByPk(
         req.params.id
       );
 
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Doctor Not Found",
+      });
+    }
+
     await doctor.destroy();
 
-    res.json({
+    res.status(200).json({
+      success: true,
       message:
         "Doctor Deleted Successfully",
     });
   } catch (error) {
     res.status(500).json({
-      message: error.message,
+      success: false,
+      message:
+        error.message,
     });
   }
 };
