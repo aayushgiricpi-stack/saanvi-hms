@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const path = require("path");
 
 
 dotenv.config();
@@ -13,6 +14,8 @@ const authRoutes = require("./routes/authRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const adminRoutes =
   require("./routes/adminRoutes");
+const dashboardRoutes =
+  require("./routes/dashboardRoutes");
 
 app.use(cors());
 app.use(express.json());
@@ -33,10 +36,22 @@ app.use(
   "/api/admin",
   adminRoutes
 );
+app.use(
+  "/api/dashboard",
+  dashboardRoutes
+);
+app.use(
+  "/uploads",
+  express.static(
+    path.join(
+      __dirname,
+      "uploads"
+    )
+  )
+);
 const PORT = process.env.PORT || 5000;
 
-sequelize
-  .sync()
+sequelize.sync({ alter: true })
   .then(() => {
     app.listen(PORT, () => {
       console.log(

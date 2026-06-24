@@ -34,10 +34,21 @@ const Appointment = sequelize.define(
       type: DataTypes.DATEONLY,
       allowNull: false,
     },
+    reason: {
+      type: DataTypes.TEXT,
+    },
 
     status: {
       type: DataTypes.STRING,
       defaultValue: "Pending",
+    },
+    prescription: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    prescriptionFile: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   }
 );

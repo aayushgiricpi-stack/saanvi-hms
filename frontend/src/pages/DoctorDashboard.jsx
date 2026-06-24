@@ -6,10 +6,18 @@ import { toast } from "react-toastify";
 function DoctorDashboard() {
   const [appointments, setAppointments] =
     useState([]);
+  const [
+    prescription,
+    setPrescription,
+  ] = useState("");
+  const [selectedFile, setSelectedFile] =
+    useState(null);
 
   const user = JSON.parse(
     localStorage.getItem("user")
   );
+
+
 
   // RBAC Access Control
   if (!user) {
@@ -93,6 +101,85 @@ function DoctorDashboard() {
       );
     }
   };
+  const savePrescription =
+    async (id) => {
+      try {
+        const token =
+          localStorage.getItem(
+            "token"
+          );
+
+        await axios.put(
+          `http://localhost:5000/api/appointments/prescription/${id}`,
+          {
+            prescription,
+          },
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+          }
+        );
+
+        toast.success(
+          "Prescription Saved"
+        );
+
+        fetchAppointments();
+      } catch (error) {
+        toast.error(
+          "Failed To Save Prescription"
+        );
+      }
+    };
+  const uploadPrescription =
+    async (appointmentId) => {
+      try {
+        if (!selectedFile) {
+          return toast.warning(
+            "Please select a file"
+          );
+        }
+
+        const token =
+          localStorage.getItem(
+            "token"
+          );
+
+        const formData =
+          new FormData();
+
+        formData.append(
+          "file",
+          selectedFile
+        );
+
+        await axios.post(
+          `http://localhost:5000/api/appointments/upload-prescription/${appointmentId}`,
+          formData,
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+              "Content-Type":
+                "multipart/form-data",
+            },
+          }
+        );
+
+        toast.success(
+          "Prescription Uploaded"
+        );
+
+        fetchAppointments();
+      } catch (error) {
+        console.log(error);
+        toast.error(
+          "Upload Failed"
+        );
+      }
+    };
 
   const pendingCount =
     appointments.filter(
@@ -109,6 +196,7 @@ function DoctorDashboard() {
       (a) => a.status === "Rejected"
     ).length;
 
+
   return (
     <DashboardLayout role="Doctor">
       <div className="container-fluid">
@@ -118,9 +206,13 @@ function DoctorDashboard() {
           <div className="card-body">
             <h2>
               👨‍⚕️ Welcome Dr.
-              {" "}
               {user.fullname}
             </h2>
+
+            <p>
+              Department:
+              {user.department}
+            </p>
 
             <p className="text-muted">
               Manage patient appointments
@@ -200,101 +292,131 @@ function DoctorDashboard() {
                   <th>Patient</th>
                   <th>Email</th>
                   <th>Date</th>
+                  <th>Reason</th>
                   <th>Status</th>
+                  <th>Prescription</th>
                   <th>Actions</th>
                 </tr>
               </thead>
 
               <tbody>
 
-                {appointments.length >
-                0 ? (
-                  appointments.map(
-                    (appointment) => (
-                      <tr
-                        key={
-                          appointment.id
-                        }
-                      >
-                        <td>
-                          {
-                            appointment.patientName
-                          }
-                        </td>
+                {appointments.length > 0 ? (
+                  appointments.map((appointment) => (
+                    <tr key={appointment.id}>
 
-                        <td>
-                          {
-                            appointment.patientEmail
-                          }
-                        </td>
+                      <td>
+                        {appointment.patientName}
+                      </td>
 
-                        <td>
-                          {
-                            appointment.appointmentDate
-                          }
-                        </td>
+                      <td>
+                        {appointment.patientEmail}
+                      </td>
 
-                        <td>
-                          <span
-                            className={`badge ${
-                              appointment.status ===
-                              "Approved"
-                                ? "bg-success"
-                                : appointment.status ===
-                                  "Rejected"
+                      <td>
+                        {appointment.appointmentDate}
+                      </td>
+
+                      <td>
+                        {appointment.reason}
+                      </td>
+
+                      {/* Status */}
+                      <td>
+                        <span
+                          className={`badge ${appointment.status === "Approved"
+                              ? "bg-success"
+                              : appointment.status === "Rejected"
                                 ? "bg-danger"
                                 : "bg-warning text-dark"
                             }`}
-                          >
-                            {
-                              appointment.status
-                            }
-                          </span>
-                        </td>
+                        >
+                          {appointment.status}
+                        </span>
+                      </td>
 
-                        <td>
-
-                          {appointment.status ===
-                          "Pending" ? (
+                      {/* Prescription */}
+                      <td>
+                        {appointment.status === "Approved" ? (
+                          appointment.prescriptionFile ? (
+                            <span className="badge bg-success">
+                              Prescription Uploaded
+                            </span>
+                          ) : (
                             <>
-                              <button
-                                className="btn btn-success btn-sm me-2"
-                                onClick={() =>
-                                  updateStatus(
-                                    appointment.id,
-                                    "Approved"
+                              <input
+                                type="file"
+                                className="form-control mb-2"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={(e) =>
+                                  setSelectedFile(
+                                    e.target.files[0]
                                   )
                                 }
-                              >
-                                Approve
-                              </button>
+                              />
 
                               <button
-                                className="btn btn-danger btn-sm"
+                                className="btn btn-primary btn-sm"
                                 onClick={() =>
-                                  updateStatus(
-                                    appointment.id,
-                                    "Rejected"
+                                  uploadPrescription(
+                                    appointment.id
                                   )
                                 }
                               >
-                                Reject
+                                Upload Prescription
                               </button>
                             </>
-                          ) : (
-                            <span>
-                              Completed
-                            </span>
-                          )}
+                          )
+                        ) : (
+                          <span className="text-muted">
+                            Approve First
+                          </span>
+                        )}
+                      </td>
 
-                        </td>
-                      </tr>
-                    )
-                  )
+                      {/* Actions */}
+                      <td>
+
+                        {appointment.status === "Pending" ? (
+                          <>
+                            <button
+                              className="btn btn-success btn-sm me-2"
+                              onClick={() =>
+                                updateStatus(
+                                  appointment.id,
+                                  "Approved"
+                                )
+                              }
+                            >
+                              Approve
+                            </button>
+
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() =>
+                                updateStatus(
+                                  appointment.id,
+                                  "Rejected"
+                                )
+                              }
+                            >
+                              Reject
+                            </button>
+                          </>
+                        ) : (
+                          <span className="badge bg-secondary">
+                            Completed
+                          </span>
+                        )}
+
+                      </td>
+
+                    </tr>
+                  ))
                 ) : (
                   <tr>
                     <td
-                      colSpan="5"
+                      colSpan="7"
                       className="text-center"
                     >
                       No Appointments Found

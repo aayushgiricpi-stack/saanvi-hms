@@ -2,9 +2,38 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import DashboardLayout from "../layouts/DashboardLayout";
 import { toast } from "react-toastify";
+// import AdminAnalytics from "../components/AdminAnalytics";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+} from "chart.js";
 
+import { Pie, Bar } from "react-chartjs-2";
+
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement
+);
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
+  const [stats, setStats] =
+    useState({});
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
+  const usersPerPage = 5;
+  const [sortBy, setSortBy] =
+    useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [doctorForm, setDoctorForm] =
     useState({
@@ -12,6 +41,7 @@ function AdminDashboard() {
       email: "",
       phone: "",
       password: "",
+      department: "",
     });
   const [editingDoctorId,
     setEditingDoctorId] =
@@ -19,6 +49,7 @@ function AdminDashboard() {
   const user = JSON.parse(
     localStorage.getItem("user")
   );
+
 
   // RBAC
   if (!user) {
@@ -39,6 +70,7 @@ function AdminDashboard() {
 
   useEffect(() => {
     fetchUsers();
+    fetchStats();
   }, []);
 
   const fetchUsers = async () => {
@@ -63,6 +95,27 @@ function AdminDashboard() {
       toast.error(
         "Failed to load users"
       );
+    }
+  };
+  const fetchStats = async () => {
+    try {
+      const token =
+        localStorage.getItem("token");
+
+      const response =
+        await axios.get(
+          "http://localhost:5000/api/dashboard/stats",
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+          }
+        );
+
+      setStats(response.data);
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -194,13 +247,107 @@ function AdminDashboard() {
     }
   };
 
-  const doctors = users.filter(
+  const totalDoctors = users.filter(
     (u) => u.role === "doctor"
-  );
+  ).length;
 
-  const patients = users.filter(
+  const totalPatients = users.filter(
     (u) => u.role === "patient"
+  ).length;
+
+  const totalAdmins = users.filter(
+    (u) => u.role === "admin"
+  ).length;
+  const indexOfLastUser =
+    currentPage * usersPerPage;
+
+  const indexOfFirstUser =
+    indexOfLastUser - usersPerPage;
+
+
+
+
+
+  const sortedUsers = [...users].sort(
+    (a, b) => {
+
+      if (sortBy === "name") {
+        return a.fullname.localeCompare(
+          b.fullname
+        );
+      }
+
+      if (sortBy === "email") {
+        return a.email.localeCompare(
+          b.email
+        );
+      }
+
+      if (sortBy === "department") {
+        return (
+          a.department || ""
+        ).localeCompare(
+          b.department || ""
+        );
+      }
+
+      return 0;
+    }
   );
+  const filteredUsers = sortedUsers.filter((user) => {
+    const keyword = searchTerm.toLowerCase();
+
+    return (
+      user.fullname?.toLowerCase().includes(keyword) ||
+      user.email?.toLowerCase().includes(keyword) ||
+      user.phone?.toLowerCase().includes(keyword) ||
+      (user.department || "").toLowerCase().includes(keyword)
+    );
+  });
+  const currentUsers = filteredUsers.slice(
+    indexOfFirstUser,
+    indexOfLastUser
+  );
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+  const userRoleData = {
+    labels: [
+      "Doctors",
+      "Patients",
+      "Admins",
+    ],
+    datasets: [
+      {
+        data: [
+          totalDoctors,
+          totalPatients,
+          totalAdmins,
+        ],
+        backgroundColor: [
+          "#198754",
+          "#0d6efd",
+          "#dc3545",
+        ],
+      },
+    ],
+  };
+  const appointmentData = {
+    labels: ["Pending", "Approved", "Rejected"],
+    datasets: [
+      {
+        label: "Appointments",
+        data: [
+          stats.pendingAppointments || 0,
+          stats.approvedAppointments || 0,
+          stats.rejectedAppointments || 0,
+        ],
+        backgroundColor: [
+          "#6c757d",
+          "#198754",
+          "#dc3545",
+        ],
+      },
+    ],
+  };
 
   return (
     <DashboardLayout role="Admin">
@@ -221,43 +368,84 @@ function AdminDashboard() {
         </div>
 
         {/* Statistics */}
+        {/* Analytics Dashboard */}
         <div className="row g-3 mb-4">
 
-          <div className="col-md-4">
-            <div className="card bg-primary text-white shadow">
+          <div className="col-md-3">
+            <div className="card bg-primary text-white shadow border-0">
               <div className="card-body text-center">
-                <h2>{users.length}</h2>
+                <h2>{stats.totalUsers || 0}</h2>
                 <p>Total Users</p>
               </div>
             </div>
           </div>
 
-          <div className="col-md-4">
-            <div className="card bg-success text-white shadow">
+          <div className="col-md-3">
+            <div className="card bg-success text-white shadow border-0">
               <div className="card-body text-center">
-                <h2>{doctors.length}</h2>
+                <h2>{stats.totalDoctors || 0}</h2>
                 <p>Total Doctors</p>
               </div>
             </div>
           </div>
 
-          <div className="col-md-4">
-            <div className="card bg-warning shadow">
+          <div className="col-md-3">
+            <div className="card bg-warning shadow border-0">
               <div className="card-body text-center">
-                <h2>{patients.length}</h2>
+                <h2>{stats.totalPatients || 0}</h2>
                 <p>Total Patients</p>
               </div>
             </div>
           </div>
 
+          <div className="col-md-3">
+            <div className="card bg-dark text-white shadow border-0">
+              <div className="card-body text-center">
+                <h2>{stats.totalAppointments || 0}</h2>
+                <p>Total Appointments</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-4">
+            <div className="card bg-secondary text-white shadow border-0">
+              <div className="card-body text-center">
+                <h2>{stats.pendingAppointments || 0}</h2>
+                <p>Pending Appointments</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-4">
+            <div className="card bg-success text-white shadow border-0">
+              <div className="card-body text-center">
+                <h2>{stats.approvedAppointments || 0}</h2>
+                <p>Approved Appointments</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-4">
+            <div className="card bg-danger text-white shadow border-0">
+              <div className="card-body text-center">
+                <h2>{stats.rejectedAppointments || 0}</h2>
+                <p>Rejected Appointments</p>
+              </div>
+            </div>
+          </div>
+
+
         </div>
+
 
         {/* Add Doctor */}
         <div className="card shadow border-0 mb-4">
 
           <div className="card-header bg-success text-white">
             <h4 className="mb-0">
-              ➕ Add Doctor
+              {editingDoctorId
+                ? "✏️ Update Doctor"
+                : "➕ Add Doctor"}
             </h4>
           </div>
 
@@ -318,26 +506,64 @@ function AdminDashboard() {
                   }
                 />
               </div>
+              <div>
+                <select
+                  className="form-control"
+                  value={doctorForm.department}
+                  onChange={(e) =>
+                    setDoctorForm({
+                      ...doctorForm,
+                      department: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">
+                    Select Department
+                  </option>
+
+                  <option value="Cardiology">
+                    Cardiology
+                  </option>
+
+                  <option value="Neurology">
+                    Neurology
+                  </option>
+
+                  <option value="Orthopedics">
+                    Orthopedics
+                  </option>
+
+                  <option value="Pediatrics">
+                    Pediatrics
+                  </option>
+
+                  <option value="ENT">
+                    ENT
+                  </option>
+
+                  <option value="General">
+                    General
+                  </option>
+                </select>
+              </div>
 
               <div className="col-md-2">
                 <input
                   type="password"
                   className="form-control"
                   placeholder="Password"
-                  value={
-                    doctorForm.password
-                  }
+                  value={doctorForm.password}
                   onChange={(e) =>
                     setDoctorForm({
                       ...doctorForm,
-                      password:
-                        e.target.value,
+                      password: e.target.value,
                     })
                   }
                 />
               </div>
 
               <div className="col-md-2">
+
                 <button
                   className={`btn w-100 ${editingDoctorId
                     ? "btn-warning"
@@ -353,12 +579,101 @@ function AdminDashboard() {
                     ? "Update Doctor"
                     : "Add Doctor"}
                 </button>
+
+                {editingDoctorId && (
+                  <button
+                    className="btn btn-secondary w-100 mt-2"
+                    onClick={() => {
+                      setEditingDoctorId(null);
+
+                      setDoctorForm({
+                        fullname: "",
+                        email: "",
+                        phone: "",
+                        password: "",
+                        department: "",
+                      });
+                    }}
+                  >
+                    Cancel
+                  </button>
+                )}
+
               </div>
 
             </div>
 
           </div>
 
+        </div>
+        <div className="row mt-4">
+
+          <div className="col-md-6">
+            <div className="card shadow border-0">
+              <div className="card-header bg-primary text-white">
+                User Distribution
+              </div>
+
+              <div className="card-body">
+                <Pie data={userRoleData} />
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-6">
+            <div className="card shadow border-0">
+              <div className="card-header bg-success text-white">
+                Appointment Statistics
+              </div>
+
+              <div className="card-body">
+                {/* <Bar data={appointmentData} /> */}
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div className="mb-3">
+
+          <select
+            className="form-select w-25"
+            value={sortBy}
+            onChange={(e) =>
+              setSortBy(
+                e.target.value
+              )
+            }
+          >
+            <option value="">
+              Sort Users
+            </option>
+
+            <option value="name">
+              Name (A-Z)
+            </option>
+
+            <option value="email">
+              Email (A-Z)
+            </option>
+
+            <option value="department">
+              Department (A-Z)
+            </option>
+
+          </select>
+
+        </div>
+        <div className="mb-3">
+          <input
+            type="text"
+            className="form-control w-25"
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // reset page when searching
+            }}
+          />
         </div>
 
         {/* Users Table */}
@@ -380,6 +695,7 @@ function AdminDashboard() {
                   <th>Full Name</th>
                   <th>Email</th>
                   <th>Phone</th>
+                  <th>Department</th>
                   <th>Role</th>
                   <th>Actions</th>
                 </tr>
@@ -387,8 +703,8 @@ function AdminDashboard() {
 
               <tbody>
 
-                {users.length > 0 ? (
-                  users.map((user) => (
+                {currentUsers.length > 0 ? (
+                  currentUsers.map((user) => (
                     <tr key={user.id}>
 
                       <td>{user.id}</td>
@@ -406,12 +722,14 @@ function AdminDashboard() {
                       </td>
 
                       <td>
+                        {user.department || "-"}
+                      </td>
+
+                      <td>
                         <span
-                          className={`badge ${user.role ===
-                            "admin"
+                          className={`badge ${user.role === "admin"
                             ? "bg-danger"
-                            : user.role ===
-                              "doctor"
+                            : user.role === "doctor"
                               ? "bg-success"
                               : "bg-primary"
                             }`}
@@ -451,7 +769,7 @@ function AdminDashboard() {
                 ) : (
                   <tr>
                     <td
-                      colSpan="6"
+                      colSpan="7"
                       className="text-center"
                     >
                       No Users Found
@@ -464,6 +782,39 @@ function AdminDashboard() {
             </table>
 
           </div>
+
+        </div>
+        <div className="d-flex justify-content-center align-items-center mt-3">
+
+          <button
+            className="btn btn-secondary me-3"
+            disabled={currentPage === 1}
+            onClick={() =>
+              setCurrentPage(
+                currentPage - 1
+              )
+            }
+          >
+            Previous
+          </button>
+
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            className="btn btn-secondary ms-3"
+            disabled={
+              currentPage === totalPages
+            }
+            onClick={() =>
+              setCurrentPage(
+                currentPage + 1
+              )
+            }
+          >
+            Next
+          </button>
 
         </div>
 

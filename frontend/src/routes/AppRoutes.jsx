@@ -16,7 +16,7 @@ import ProtectedRoute
 import AdminDashboard
   from "../pages/AdminDashboard";
 
-function AppRoutes() {
+function AppRoutes({ toggleTheme, theme })  {
   return (
     <Routes>
       <Route

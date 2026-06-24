@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import { toast } from "react-toastify";
 function Register() {
   const navigate = useNavigate();
 
@@ -25,6 +25,17 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (
+      !formData.fullName ||
+      !formData.email ||
+      !formData.phone ||
+      !formData.password
+    ) {
+      return toast.warning(
+        "Please fill all fields"
+      );
+    }
+
     try {
       const response = await axios.post(
         "http://localhost:5000/api/auth/register",
@@ -37,13 +48,19 @@ function Register() {
         }
       );
 
-      alert(response.data.message);
+      toast.success(
+        response.data.message ||
+        "Registration Successful"
+      );
 
-      navigate("/");
+      setTimeout(() => {
+        navigate("/");
+      }, 1000);
+
     } catch (error) {
-      alert(
+      toast.error(
         error.response?.data?.message ||
-          "Registration Failed"
+        "Registration Failed"
       );
     }
   };
@@ -53,7 +70,7 @@ function Register() {
       className="container-fluid min-vh-100 d-flex align-items-center justify-content-center"
       style={{
         background:
-          "linear-gradient(135deg, #20c997, #0d6efd)",
+          "linear-gradient(135deg, #2563eb, #14b8a6)"
       }}
     >
       <div className="row w-100 justify-content-center">
@@ -81,11 +98,10 @@ function Register() {
             <div className="d-flex gap-2 mb-4">
               <button
                 type="button"
-                className={`btn ${
-                  selectedRole === "doctor"
-                    ? "btn-primary"
-                    : "btn-outline-primary"
-                } flex-fill`}
+                className={`btn ${selectedRole === "doctor"
+                  ? "btn-primary"
+                  : "btn-outline-primary"
+                  } flex-fill`}
                 onClick={() =>
                   setSelectedRole("doctor")
                 }
@@ -95,11 +111,10 @@ function Register() {
 
               <button
                 type="button"
-                className={`btn ${
-                  selectedRole === "patient"
-                    ? "btn-success"
-                    : "btn-outline-success"
-                } flex-fill`}
+                className={`btn ${selectedRole === "patient"
+                  ? "btn-success"
+                  : "btn-outline-success"
+                  } flex-fill`}
                 onClick={() =>
                   setSelectedRole("patient")
                 }
@@ -151,11 +166,10 @@ function Register() {
 
               <button
                 type="submit"
-                className={`btn w-100 py-2 ${
-                  selectedRole === "doctor"
-                    ? "btn-primary"
-                    : "btn-success"
-                }`}
+                className={`btn w-100 py-2 ${selectedRole === "doctor"
+                  ? "btn-primary"
+                  : "btn-success"
+                  }`}
               >
                 Register as{" "}
                 {selectedRole === "doctor"

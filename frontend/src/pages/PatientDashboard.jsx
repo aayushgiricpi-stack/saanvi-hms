@@ -12,6 +12,7 @@ function PatientDashboard() {
       doctorId: "",
       doctorName: "",
       appointmentDate: "",
+      reason: "",
     });
 
   const [myAppointments,
@@ -20,6 +21,10 @@ function PatientDashboard() {
   const user = JSON.parse(
     localStorage.getItem("user")
   );
+  const [
+    selectedDepartment,
+    setSelectedDepartment,
+  ] = useState("");
 
   // RBAC
   if (!user) {
@@ -124,6 +129,8 @@ function PatientDashboard() {
               appointment.doctorName,
             appointmentDate:
               appointment.appointmentDate,
+            reason:
+              appointment.reason,
           },
           {
             headers: {
@@ -143,12 +150,14 @@ function PatientDashboard() {
           doctorId: "",
           doctorName: "",
           appointmentDate: "",
+          reason: "",
+
         });
       } catch (error) {
         toast.error(
           error.response?.data
             ?.message ||
-            "Booking Failed"
+          "Booking Failed"
         );
       }
     };
@@ -162,6 +171,15 @@ function PatientDashboard() {
     myAppointments.filter(
       (a) => a.status === "Approved"
     ).length;
+
+  const filteredDoctors =
+    selectedDepartment
+      ? doctors.filter(
+        (doctor) =>
+          doctor.department ===
+          selectedDepartment
+      )
+      : doctors;
 
   return (
     <DashboardLayout role="Patient">
@@ -233,23 +251,63 @@ function PatientDashboard() {
 
           <div className="card-body">
 
+
+            {/* Department Dropdown */}
             <select
               className="form-select mb-3"
-              value={
-                appointment.doctorId
+              value={selectedDepartment}
+              onChange={(e) =>
+                setSelectedDepartment(
+                  e.target.value
+                )
               }
+            >
+              <option value="">
+                Select Department
+              </option>
+
+              <option value="Cardiology">
+                Cardiology
+              </option>
+
+              <option value="Neurology">
+                Neurology
+              </option>
+
+              <option value="Orthopedics">
+                Orthopedics
+              </option>
+
+              <option value="Pediatrics">
+                Pediatrics
+              </option>
+
+              <option value="ENT">
+                ENT
+              </option>
+
+              <option value="General">
+                General
+              </option>
+            </select>
+
+            {/* Doctor Dropdown */}
+            <select
+              className="form-select mb-3"
+              value={appointment.doctorId}
               onChange={(e) => {
                 const doctor =
-                  doctors.find(
+                  filteredDoctors.find(
                     (d) =>
                       d.id ==
                       e.target.value
                   );
 
+                if (!doctor) return;
+
                 setAppointment({
                   ...appointment,
-                  doctorId:
-                    doctor.id,
+                  doctorId: doctor.id,
                   doctorName:
                     doctor.fullname,
                 });
@@ -259,21 +317,18 @@ function PatientDashboard() {
                 Select Doctor
               </option>
 
-              {doctors.map(
+              {filteredDoctors.map(
                 (doctor) => (
                   <option
                     key={doctor.id}
-                    value={
-                      doctor.id
-                    }
+                    value={doctor.id}
                   >
-                    {
-                      doctor.fullname
-                    }
+                    {doctor.fullname}
                   </option>
                 )
               )}
             </select>
+
 
             <input
               type="date"
@@ -286,6 +341,18 @@ function PatientDashboard() {
                   ...appointment,
                   appointmentDate:
                     e.target.value,
+                })
+              }
+            />
+            <textarea
+              className="form-control mb-3"
+              rows="3"
+              placeholder="Reason for Appointment"
+              value={appointment.reason}
+              onChange={(e) =>
+                setAppointment({
+                  ...appointment,
+                  reason: e.target.value,
                 })
               }
             />
@@ -320,13 +387,14 @@ function PatientDashboard() {
                   <th>Doctor</th>
                   <th>Date</th>
                   <th>Status</th>
+                  <th>Prescription</th>
                 </tr>
               </thead>
 
               <tbody>
 
                 {myAppointments.length >
-                0 ? (
+                  0 ? (
                   myAppointments.map(
                     (appt) => (
                       <tr
@@ -348,20 +416,33 @@ function PatientDashboard() {
 
                         <td>
                           <span
-                            className={`badge ${
-                              appt.status ===
+                            className={`badge ${appt.status ===
                               "Approved"
-                                ? "bg-success"
-                                : appt.status ===
-                                  "Rejected"
+                              ? "bg-success"
+                              : appt.status ===
+                                "Rejected"
                                 ? "bg-danger"
                                 : "bg-warning text-dark"
-                            }`}
+                              }`}
                           >
                             {
                               appt.status
                             }
                           </span>
+                        </td>
+                        <td>
+                          {appt.prescriptionFile ? (
+                            <a
+                              href={`http://localhost:5000/uploads/prescriptions/${appt.prescriptionFile}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-primary btn-sm"
+                            >
+                              View Prescription
+                            </a>
+                          ) : (
+                            "Not Uploaded"
+                          )}
                         </td>
                       </tr>
                     )

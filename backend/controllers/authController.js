@@ -96,6 +96,8 @@ exports.login = async (req, res) => {
         fullname: user.fullname,
         email: user.email,
         role: user.role,
+        department: user.department,
+
       },
     });
   } catch (error) {
@@ -119,6 +121,8 @@ exports.getDoctors = async (
           "id",
           "fullname",
           "email",
+          "department",
+
         ],
       });
 
@@ -128,7 +132,7 @@ exports.getDoctors = async (
       message: error.message,
     });
   }
-};  
+};
 exports.getAllUsers =
   async (req, res) => {
     try {

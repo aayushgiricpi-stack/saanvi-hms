@@ -31,6 +31,7 @@ exports.createDoctor = async (req, res) => {
       email,
       phone,
       password,
+      department,
     } = req.body;
 
     const existingDoctor =
@@ -56,6 +57,7 @@ exports.createDoctor = async (req, res) => {
         phone,
         password: hashedPassword,
         role: "doctor",
+        department,
       });
 
     res.status(201).json({
@@ -100,6 +102,9 @@ exports.updateDoctor = async (
         req.body.email,
       phone:
         req.body.phone,
+      department:
+      req.body.department
+
     });
 
     res.status(200).json({

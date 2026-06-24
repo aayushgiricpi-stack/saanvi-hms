@@ -7,16 +7,20 @@ const {
   getDoctorAppointments,
   getPatientAppointments,
   updateStatus,
-} = require(
-  "../controllers/appointmentController"
-);
-
+  addPrescription,
+  uploadPrescription,
+} = require("../controllers/appointmentController");
+console.log("uploadPrescription =", uploadPrescription);
 const verifyToken = require(
   "../middleware/authMiddleware"
 );
 
 const authorizeRole = require(
   "../middleware/roleMiddleware"
+);
+
+const upload = require(
+  "../middleware/uploadPrescription"
 );
 
 router.post(
@@ -46,5 +50,14 @@ router.put(
   authorizeRole("doctor"),
   updateStatus
 );
-
+router.put(
+  "/prescription/:id",
+  verifyToken,
+  addPrescription
+);
+router.post(
+  "/upload-prescription/:id",
+  upload.single("file"),
+  uploadPrescription
+);
 module.exports = router;
