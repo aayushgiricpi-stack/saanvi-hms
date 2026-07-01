@@ -12,6 +12,20 @@ function DoctorDashboard() {
   ] = useState("");
   const [selectedFile, setSelectedFile] =
     useState(null);
+  const [showReportForm, setShowReportForm] =
+    useState(false);
+
+  const [selectedAppointment, setSelectedAppointment] =
+    useState(null);
+
+  const [reportData, setReportData] = useState({
+    diagnosis: "",
+    symptoms: "",
+    treatment: "",
+    medicines: "",
+    remarks: "",
+    nextVisit: "",
+  });
 
   const user = JSON.parse(
     localStorage.getItem("user")
@@ -180,6 +194,56 @@ function DoctorDashboard() {
         );
       }
     };
+  const handleReportChange = (e) => {
+    setReportData({
+      ...reportData,
+      [e.target.name]: e.target.value,
+    });
+  };
+  const saveMedicalReport = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.post(
+        "http://localhost:5000/api/reports",
+        {
+          appointmentId: selectedAppointment.id,
+          department: user.department,
+          diagnosis: reportData.diagnosis,
+          symptoms: reportData.symptoms,
+          treatment: reportData.treatment,
+          medicines: reportData.medicines,
+          remarks: reportData.remarks,
+          nextVisit: reportData.nextVisit,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success("Medical Report Created Successfully");
+
+      setShowReportForm(false);
+
+      setSelectedAppointment(null);
+
+      setReportData({
+        diagnosis: "",
+        symptoms: "",
+        treatment: "",
+        medicines: "",
+        remarks: "",
+        nextVisit: "",
+      });
+
+    } catch (error) {
+      console.log(error);
+
+      toast.error("Failed to Create Medical Report");
+    }
+  };
 
   const pendingCount =
     appointments.filter(
@@ -325,10 +389,10 @@ function DoctorDashboard() {
                       <td>
                         <span
                           className={`badge ${appointment.status === "Approved"
-                              ? "bg-success"
-                              : appointment.status === "Rejected"
-                                ? "bg-danger"
-                                : "bg-warning text-dark"
+                            ? "bg-success"
+                            : appointment.status === "Rejected"
+                              ? "bg-danger"
+                              : "bg-warning text-dark"
                             }`}
                         >
                           {appointment.status}
@@ -377,7 +441,7 @@ function DoctorDashboard() {
                       {/* Actions */}
                       <td>
 
-                        {appointment.status === "Pending" ? (
+                        {appointment.status === "Pending" && (
                           <>
                             <button
                               className="btn btn-success btn-sm me-2"
@@ -403,9 +467,25 @@ function DoctorDashboard() {
                               Reject
                             </button>
                           </>
-                        ) : (
-                          <span className="badge bg-secondary">
-                            Completed
+                        )}
+
+                        {appointment.status === "Approved" && (
+                          <>
+                            <button
+                              className="btn btn-info btn-sm mt-2"
+                              onClick={() => {
+                                setSelectedAppointment(appointment);
+                                setShowReportForm(true);
+                              }}
+                            >
+                              🩺 Medical Report
+                            </button>
+                          </>
+                        )}
+
+                        {appointment.status === "Rejected" && (
+                          <span className="badge bg-danger">
+                            Rejected
                           </span>
                         )}
 
@@ -432,6 +512,150 @@ function DoctorDashboard() {
 
         </div>
       </div>
+      {showReportForm && (
+
+        <div
+          className="modal fade show"
+          style={{
+            display: "block",
+            background: "rgba(0,0,0,.5)"
+          }}
+        >
+
+          <div className="modal-dialog modal-lg">
+
+            <div className="modal-content">
+
+              <div className="modal-header bg-primary text-white">
+
+                <h4>Create Medical Report</h4>
+
+                <button
+                  className="btn-close btn-close-white"
+                  onClick={() =>
+                    setShowReportForm(false)}
+                ></button>
+
+              </div>
+
+              <div className="modal-body">
+
+                <div className="row">
+
+                  <div className="col-md-6 mb-3">
+
+                    <label>Diagnosis</label>
+
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="diagnosis"
+                      value={reportData.diagnosis}
+                      onChange={handleReportChange}
+                    />
+
+                  </div>
+
+                  <div className="col-md-6 mb-3">
+
+                    <label>Symptoms</label>
+
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="symptoms"
+                      value={reportData.symptoms}
+                      onChange={handleReportChange}
+                    />
+
+                  </div>
+
+                  <div className="col-md-12 mb-3">
+
+                    <label>Treatment</label>
+
+                    <textarea
+                      rows="2"
+                      className="form-control"
+                      name="treatment"
+                      value={reportData.treatment}
+                      onChange={handleReportChange}
+                    />
+
+                  </div>
+
+                  <div className="col-md-12 mb-3">
+
+                    <label>Medicines</label>
+
+                    <textarea
+                      rows="2"
+                      className="form-control"
+                      name="medicines"
+                      value={reportData.medicines}
+                      onChange={handleReportChange}
+                    />
+
+                  </div>
+
+                  <div className="col-md-12 mb-3">
+
+                    <label>Doctor Remarks</label>
+
+                    <textarea
+                      rows="2"
+                      className="form-control"
+                      name="remarks"
+                      value={reportData.remarks}
+                      onChange={handleReportChange}
+                    />
+
+                  </div>
+
+                  <div className="col-md-6">
+
+                    <label>Next Visit</label>
+
+                    <input
+                      type="date"
+                      className="form-control"
+                      name="nextVisit"
+                      value={reportData.nextVisit}
+                      onChange={handleReportChange}
+                    />
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              <div className="modal-footer">
+
+                <button
+                  className="btn btn-secondary"
+                  onClick={() =>
+                    setShowReportForm(false)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className="btn btn-primary"
+                  onClick={saveMedicalReport}
+                >
+                  Save Medical Report
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
     </DashboardLayout>
   );
 }

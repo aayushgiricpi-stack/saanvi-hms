@@ -11,64 +11,130 @@ function Sidebar({ role }) {
     >
       <h5 className="mb-4">Menu</h5>
 
-      {role === "Doctor" ? (
+      {/* ================= ADMIN ================= */}
+
+      {role === "Admin" && (
+        <>
+          <Link
+            className="d-block text-white mb-3 text-decoration-none"
+            to="/admin-dashboard"
+          >
+            📊 Dashboard
+          </Link>
+
+          <Link
+            className="d-block text-white mb-3 text-decoration-none"
+            to="/admin-appointments"
+          >
+            📅 Appointments
+          </Link>
+
+          <Link
+            className="d-block text-white mb-3 text-decoration-none"
+            to="/admin-medical-records"
+          >
+            🩺 Medical Records
+          </Link>
+
+          <Link
+            className="d-block text-white mb-3 text-decoration-none"
+            to="/admin-prescriptions"
+          >
+            💊 Prescriptions
+          </Link>
+           <Link
+            className="d-block text-white mb-3 text-decoration-none"
+            to="/doctor-patients"
+          >
+            👨‍⚕️ doctor
+          </Link>
+           <Link
+            className="d-block text-white mb-3 text-decoration-none"
+            to="/doctor-patients"
+          >
+            👨‍⚕️ Patients
+          </Link>
+        </>
+      )}
+
+      {/* ================= DOCTOR ================= */}
+
+      {role === "Doctor" && (
         <>
           <Link
             className="d-block text-white mb-3 text-decoration-none"
             to="/doctor-dashboard"
           >
-            Dashboard
+            📊 Dashboard
           </Link>
 
           <Link
             className="d-block text-white mb-3 text-decoration-none"
-            to="/patients"
+            to="/doctor-patients"
           >
-            Patients
+            👨‍⚕️ Patients
           </Link>
 
           <Link
             className="d-block text-white mb-3 text-decoration-none"
-            to="/appointments"
+            to="/doctor-appointments"
           >
-            Appointments
+            📅 Appointments
           </Link>
 
           <Link
             className="d-block text-white mb-3 text-decoration-none"
-            to="/reports"
+            to="/doctor-reports"
           >
-            Reports
+            📋 Medical Reports
+          </Link>
+
+          <Link
+            className="d-block text-white mb-3 text-decoration-none"
+            to="/doctor-profile"
+          >
+            👤 Profile
           </Link>
         </>
-      ) : (
+      )}
+
+      {/* ================= PATIENT ================= */}
+
+      {role === "Patient" && (
         <>
           <Link
             className="d-block text-white mb-3 text-decoration-none"
             to="/patient-dashboard"
           >
-            Dashboard
+            📊 Dashboard
           </Link>
 
           <Link
             className="d-block text-white mb-3 text-decoration-none"
-            to="/my-appointments"
+            to="/patient-appointments"
           >
-            My Appointments
+            📅 My Appointments
           </Link>
 
           <Link
             className="d-block text-white mb-3 text-decoration-none"
-            to="/medical-records"
+            to="/patient-medical-records"
           >
-            Medical Records
+            🩺 Medical Records
           </Link>
 
           <Link
             className="d-block text-white mb-3 text-decoration-none"
-            to="/prescriptions"
+            to="/patient-prescriptions"
           >
-            Prescriptions
+            💊 Prescriptions
+          </Link>
+
+          <Link
+            className="d-block text-white mb-3 text-decoration-none"
+            to="/patient-profile"
+          >
+            👤 Profile
           </Link>
         </>
       )}

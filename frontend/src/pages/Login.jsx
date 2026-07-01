@@ -128,8 +128,8 @@ function Login() {
               <button
                 type="button"
                 className={`btn ${role === "doctor"
-                    ? "btn-primary"
-                    : "btn-outline-primary"
+                  ? "btn-primary"
+                  : "btn-outline-primary"
                   } flex-fill`}
                 onClick={() =>
                   setRole("doctor")
@@ -141,8 +141,8 @@ function Login() {
               <button
                 type="button"
                 className={`btn ${role === "patient"
-                    ? "btn-success"
-                    : "btn-outline-success"
+                  ? "btn-success"
+                  : "btn-outline-success"
                   } flex-fill`}
                 onClick={() =>
                   setRole("patient")
@@ -186,12 +186,18 @@ function Login() {
                 required
               />
 
+
               <button
                 className="btn btn-dark w-100"
                 type="submit"
               >
                 Login
               </button>
+              <div className="text-end mt-2">
+                <Link to="/forgot-password">
+                  Forgot Password?
+                </Link>
+              </div>
             </form>
 
             {role ===

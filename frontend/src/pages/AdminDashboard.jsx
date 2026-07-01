@@ -2,27 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import DashboardLayout from "../layouts/DashboardLayout";
 import { toast } from "react-toastify";
-// import AdminAnalytics from "../components/AdminAnalytics";
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-} from "chart.js";
+ import AdminAnalytics from "../components/AdminAnalytics";
 
-import { Pie, Bar } from "react-chartjs-2";
-
-ChartJS.register(
-  ArcElement,
-  Tooltip,
-  Legend,
-  CategoryScale,
-  LinearScale,
-  BarElement
-);
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [stats, setStats] =
@@ -209,7 +190,7 @@ function AdminDashboard() {
       await axios.put(
         `http://localhost:5000/api/admin/doctors/${editingDoctorId}`,
         {
-          fullname:
+          fullname: 
             doctorForm.fullname,
           email:
             doctorForm.email,
@@ -309,46 +290,8 @@ function AdminDashboard() {
     indexOfLastUser
   );
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-  const userRoleData = {
-    labels: [
-      "Doctors",
-      "Patients",
-      "Admins",
-    ],
-    datasets: [
-      {
-        data: [
-          totalDoctors,
-          totalPatients,
-          totalAdmins,
-        ],
-        backgroundColor: [
-          "#198754",
-          "#0d6efd",
-          "#dc3545",
-        ],
-      },
-    ],
-  };
-  const appointmentData = {
-    labels: ["Pending", "Approved", "Rejected"],
-    datasets: [
-      {
-        label: "Appointments",
-        data: [
-          stats.pendingAppointments || 0,
-          stats.approvedAppointments || 0,
-          stats.rejectedAppointments || 0,
-        ],
-        backgroundColor: [
-          "#6c757d",
-          "#198754",
-          "#dc3545",
-        ],
-      },
-    ],
-  };
-
+ 
+  
   return (
     <DashboardLayout role="Admin">
       <div className="container-fluid">
@@ -606,33 +549,7 @@ function AdminDashboard() {
           </div>
 
         </div>
-        <div className="row mt-4">
-
-          <div className="col-md-6">
-            <div className="card shadow border-0">
-              <div className="card-header bg-primary text-white">
-                User Distribution
-              </div>
-
-              <div className="card-body">
-                <Pie data={userRoleData} />
-              </div>
-            </div>
-          </div>
-
-          <div className="col-md-6">
-            <div className="card shadow border-0">
-              <div className="card-header bg-success text-white">
-                Appointment Statistics
-              </div>
-
-              <div className="card-body">
-                {/* <Bar data={appointmentData} /> */}
-              </div>
-            </div>
-          </div>
-
-        </div>
+       
         <div className="mb-3">
 
           <select

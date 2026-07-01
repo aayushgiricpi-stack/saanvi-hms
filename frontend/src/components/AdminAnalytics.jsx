@@ -12,8 +12,8 @@ import {
 } from "chart.js";
 
 import {
-  Bar,
   Pie,
+  Bar,
   Line,
 } from "react-chartjs-2";
 
@@ -29,14 +29,19 @@ ChartJS.register(
   Legend
 );
 
-function AdminAnalytics({ stats }) {
+function AdminAnalytics({ stats = {} }) {
   const pieData = {
     labels: ["Doctors", "Patients"],
     datasets: [
       {
+        label: "Users",
         data: [
           stats.totalDoctors || 0,
           stats.totalPatients || 0,
+        ],
+        backgroundColor: [
+          "#36A2EB",
+          "#4BC0C0",
         ],
       },
     ],
@@ -55,6 +60,11 @@ function AdminAnalytics({ stats }) {
           stats.pendingAppointments || 0,
           stats.approvedAppointments || 0,
           stats.rejectedAppointments || 0,
+        ],
+        backgroundColor: [
+          "#ffc107",
+          "#28a745",
+          "#dc3545",
         ],
       },
     ],
@@ -76,6 +86,9 @@ function AdminAnalytics({ stats }) {
           stats.totalPatients || 0,
           stats.totalAppointments || 0,
         ],
+        borderColor: "#0d6efd",
+        backgroundColor: "#0d6efd",
+        tension: 0.3,
       },
     ],
   };
@@ -86,7 +99,7 @@ function AdminAnalytics({ stats }) {
       <div className="col-md-6">
         <div className="card shadow">
           <div className="card-body">
-            <h5>🥧 Doctor vs Patient</h5>
+            <h5>Doctor vs Patient</h5>
             <Pie data={pieData} />
           </div>
         </div>
@@ -95,7 +108,7 @@ function AdminAnalytics({ stats }) {
       <div className="col-md-6">
         <div className="card shadow">
           <div className="card-body">
-            <h5>📊 Appointment Status</h5>
+            <h5>Appointment Status</h5>
             <Bar data={barData} />
           </div>
         </div>
@@ -104,7 +117,7 @@ function AdminAnalytics({ stats }) {
       <div className="col-md-12 mt-4">
         <div className="card shadow">
           <div className="card-body">
-            <h5>📈 Hospital Trends</h5>
+            <h5>Hospital Statistics</h5>
             <Line data={lineData} />
           </div>
         </div>

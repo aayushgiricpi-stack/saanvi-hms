@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import DashboardLayout from "../layouts/DashboardLayout";
 import { toast } from "react-toastify";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 function PatientDashboard() {
   const [doctors, setDoctors] =
@@ -17,6 +19,7 @@ function PatientDashboard() {
 
   const [myAppointments,
     setMyAppointments] = useState([]);
+  const [reports, setReports] = useState([]);
 
   const user = JSON.parse(
     localStorage.getItem("user")
@@ -48,6 +51,7 @@ function PatientDashboard() {
   useEffect(() => {
     fetchDoctors();
     fetchMyAppointments();
+    fetchMedicalReports();
   }, []);
 
   const fetchDoctors = async () => {
@@ -161,6 +165,261 @@ function PatientDashboard() {
         );
       }
     };
+  const fetchMedicalReports = async () => {
+
+    try {
+
+      const token =
+        localStorage.getItem("token");
+
+      const response =
+        await axios.get(
+          "http://localhost:5000/api/reports/patient",
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+          }
+        );
+
+      setReports(response.data);
+
+    } catch (error) {
+
+      console.log(error);
+
+    }
+
+  };
+  const downloadReport = (report) => {
+
+    const doc = new jsPDF();
+
+    doc.setFontSize(20);
+    doc.setTextColor(25, 118, 210);
+    doc.text("SAANVI HOSPITAL MANAGEMENT SYSTEM", 15, 20);
+
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Medical Report", 15, 32);
+
+    autoTable(doc, {
+      startY: 40,
+
+      theme: "grid",
+
+      head: [["Field", "Details"]],
+
+      body: [
+
+        ["Patient Name", report.patientName],
+
+        ["Patient Email", report.patientEmail],
+
+        ["Doctor Name", report.doctorName],
+
+        ["Department", report.department],
+
+        ["Diagnosis", report.diagnosis],
+
+        ["Symptoms", report.symptoms],
+
+        ["Treatment", report.treatment],
+
+        ["Medicines", report.medicines],
+
+        ["Remarks", report.remarks || "-"],
+
+        ["Next Visit", report.nextVisit || "-"],
+
+        ["Report Date", report.reportDate],
+
+      ],
+
+      headStyles: {
+        fillColor: [25, 118, 210],
+      },
+
+    });
+
+    doc.setFontSize(12);
+
+    doc.text(
+      "Doctor Signature: ____________________",
+      15,
+      doc.lastAutoTable.finalY + 20
+    );
+
+    doc.text(
+      "Hospital Stamp: _____________________",
+      15,
+      doc.lastAutoTable.finalY + 35
+    );
+
+    doc.save(`Medical_Report_${report.id}.pdf`);
+
+  };
+  const printReport = (report) => {
+
+    const printWindow = window.open(
+      "",
+      "_blank"
+    );
+
+    printWindow.document.write(`
+
+<html>
+
+<head>
+
+<title>Medical Report</title>
+
+<style>
+
+body{
+
+font-family:Arial;
+
+padding:40px;
+
+}
+
+table{
+
+width:100%;
+
+border-collapse:collapse;
+
+}
+
+td{
+
+border:1px solid #ddd;
+
+padding:10px;
+
+}
+
+h2{
+
+text-align:center;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>
+
+SAANVI HOSPITAL MANAGEMENT SYSTEM
+
+</h2>
+
+<h3>
+
+Medical Report
+
+</h3>
+
+<table>
+
+<tr>
+
+<td>Patient</td>
+
+<td>${user.fullname}</td>
+
+</tr>
+
+<tr>
+
+<td>Doctor</td>
+
+<td>${report.doctor?.fullname}</td>
+
+</tr>
+
+<tr>
+
+<td>Department</td>
+
+<td>${report.doctor?.department}</td>
+
+</tr>
+
+<tr>
+
+<td>Appointment Date</td>
+
+<td>${report.Appointment?.appointmentDate}</td>
+
+</tr>
+
+<tr>
+
+<td>Diagnosis</td>
+
+<td>${report.diagnosis}</td>
+
+</tr>
+
+<tr>
+
+<td>Symptoms</td>
+
+<td>${report.symptoms}</td>
+
+</tr>
+
+<tr>
+
+<td>Treatment</td>
+
+<td>${report.treatment}</td>
+
+</tr>
+
+<tr>
+
+<td>Medicines</td>
+
+<td>${report.medicines}</td>
+
+</tr>
+
+<tr>
+
+<td>Remarks</td>
+
+<td>${report.remarks}</td>
+
+</tr>
+
+<tr>
+
+<td>Next Visit</td>
+
+<td>${report.nextVisit}</td>
+
+</tr>
+
+</table>
+
+</body>
+
+</html>
+
+`);
+
+    printWindow.document.close();
+
+    printWindow.print();
+
+  };
 
   const pendingCount =
     myAppointments.filter(
@@ -463,6 +722,138 @@ function PatientDashboard() {
             </table>
 
           </div>
+        </div>
+        {/* Medical Reports */}
+        {/* Medical Reports */}
+        <div className="card shadow border-0 mt-4">
+
+          <div className="card-header bg-success text-white">
+            <h4 className="mb-0">
+              🩺 My Medical Reports
+            </h4>
+          </div>
+
+          <div className="card-body">
+
+            {reports.length > 0 ? (
+
+              reports.map((report) => (
+
+                <div
+                  className="card shadow border-success mb-4"
+                  key={report.id}
+                >
+
+                  <div className="card-header bg-light d-flex justify-content-between align-items-center">
+
+                    <h5 className="mb-0">
+                      📋 Medical Report #{report.id}
+                    </h5>
+
+                    <span className="badge bg-success">
+                      {report.reportDate}
+                    </span>
+
+                  </div>
+
+                  <div className="card-body">
+
+                    <div className="row">
+
+                      <div className="col-md-6 mb-3">
+                        <strong>👤 Patient Name</strong>
+                        <p>{report.patientName}</p>
+                      </div>
+
+                      <div className="col-md-6 mb-3">
+                        <strong>📧 Email</strong>
+                        <p>{report.patientEmail}</p>
+                      </div>
+
+                      <div className="col-md-6 mb-3">
+                        <strong>👨‍⚕️ Doctor</strong>
+                        <p>{report.doctorName}</p>
+                      </div>
+
+                      <div className="col-md-6 mb-3">
+                        <strong>🏥 Department</strong>
+                        <p>{report.department}</p>
+                      </div>
+
+                      <div className="col-md-6 mb-3">
+                        <strong>🩺 Diagnosis</strong>
+                        <p>{report.diagnosis}</p>
+                      </div>
+
+                      <div className="col-md-6 mb-3">
+                        <strong>🤒 Symptoms</strong>
+                        <p>{report.symptoms}</p>
+                      </div>
+
+                      <div className="col-md-6 mb-3">
+                        <strong>💉 Treatment</strong>
+                        <p>{report.treatment}</p>
+                      </div>
+
+                      <div className="col-md-6 mb-3">
+                        <strong>💊 Medicines</strong>
+                        <p>{report.medicines}</p>
+                      </div>
+
+                      <div className="col-md-6 mb-3">
+                        <strong>📝 Remarks</strong>
+                        <p>{report.remarks || "-"}</p>
+                      </div>
+
+                      <div className="col-md-6 mb-3">
+                        <strong>📅 Next Visit</strong>
+                        <p>{report.nextVisit || "-"}</p>
+                      </div>
+
+                    </div>
+
+                    <hr />
+
+                    <div className="d-flex gap-2">
+
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => downloadReport(report)}
+                      >
+                        📄 Download PDF
+                      </button>
+
+                      <button
+                        className="btn btn-success"
+                        onClick={() => printReport(report)}
+                      >
+                        🖨️ Print Report
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              ))
+
+            ) : (
+
+              <div className="text-center py-5">
+
+                <h4>No Medical Reports Found</h4>
+
+                <p className="text-muted">
+                  Your doctor has not created any medical report yet.
+                </p>
+
+              </div>
+
+            )}
+
+          </div>
+
         </div>
 
       </div>
